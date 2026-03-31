@@ -30,26 +30,26 @@ public class KafkaConsumerService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        //try
-        //{
-        //    await _kafkaConsumer.ConsumeAsync(_options.Value.Topic, HandleMessage, ct);
-        //}
-        //catch (Exception ex)
-        //{
-        //    _logger.LogError(ex, ex.Message);
-        //}
+        try
+        {
+            await _kafkaConsumer.ConsumeAsync(_options.Value.Topic, HandleMessage, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+        }
 
 
         //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Side\":\"Buy\",\"Entry\":67540.0,\"Risk\":10,\"EntryRange\":null,\"StopLoss\":0,\"TakeProfit\":0,\"Market\":\"limit\"}}";
         //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Side\":\"SELL\",\"Entry\":71037.0,\"Risk\":10,\"EntryRange\":null,\"StopLoss\":0,\"TakeProfit\":0,\"Market\":\"market\"}}";
         //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":1,\"Side\":\"SELL\",\"StopLoss\":70000}}";
         //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":50}}";
-        string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":100}}";
-        await HandleMessage(Guid.NewGuid().ToString(), json);
-        while (!ct.IsCancellationRequested)
-        {
+        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":100}}";
+        //await HandleMessage(Guid.NewGuid().ToString(), json);
+        //while (!ct.IsCancellationRequested)
+        //{
 
-        }
+        //}
     }
     private async Task HandleMessage(string? key, string value)
     {
