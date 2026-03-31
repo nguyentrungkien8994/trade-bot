@@ -83,7 +83,14 @@ public class BybitClient : IExchangeClient
             _cache.RemoveTradeStatus(tradeKey);
         }
 
-        var accountTradeHistory = new { account_id = acc.AccountId, msg_id = order.MsgId, command = JsonConvert.SerializeObject(result.Data) };
+        var accountTradeHistory = new { account_id = acc.AccountId, 
+                                        msg_id = order.MsgId, 
+                                        command = JsonConvert.SerializeObject(result.Data),
+                                        created_at = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                                        updated_at = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                                        created_by = "admin",
+                                        updated_by = "admin",
+        };
         object jsonObj = new { entity_name = "AccountTradeHistory", entity_value = JsonConvert.SerializeObject(accountTradeHistory) };
         await _kafkaproduce.ProduceAsync<object>("trade.storage", order.MsgId, jsonObj);
 
