@@ -1,7 +1,8 @@
 
 using System.Threading.Channels;
-using Trade.Bot.Models;
+using Trade.Bot.Enum;
 using Trade.Bot.Exchanges;
+using Trade.Bot.Models;
 
 namespace Trade.Bot.Services;
 
@@ -42,7 +43,6 @@ public class ExecutionEngineV2
             }
         }
     }
-
     private async Task WorkerLoop(string exchangeName)
     {
         var client = _clients.First(x => x.Name == exchangeName);
@@ -54,13 +54,46 @@ public class ExecutionEngineV2
 
             try
             {
-                await client.PlaceOrderAsync(job.Account, job.Order, CancellationToken.None);
-                _idempotency.MarkProcessed(job.IdempotencyKey);
+                switch (job.Action)
+                {
+                    case TradeAction.Open:
+                    case TradeAction.Reduce:
+                        await client.PlaceOrderAsync(job.Account, job.Order, CancellationToken.None);
+                        break;
+
+                    case TradeAction.UpdateSL:
+                        await client.UpdateStopLossAsync(
+                            job.Account,
+                            job.Order.Symbol,
+                            job.Order.StopLoss,
+                            CancellationToken.None);
+                        break;
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] {ex.Message}");
+                Console.WriteLine($"[EXEC ERROR] {ex.Message}");
             }
         }
     }
+    //private async Task WorkerLoop(string exchangeName)
+    //{
+    //    var client = _clients.First(x => x.Name == exchangeName);
+
+    //    await foreach (var job in _channel.Reader.ReadAllAsync())
+    //    {
+    //        if (!job.Account.Exchange.Equals(exchangeName, StringComparison.OrdinalIgnoreCase))
+    //            continue;
+
+    //        try
+    //        {
+    //            await client.PlaceOrderAsync(job.Account, job.Order, CancellationToken.None);
+    //            _idempotency.MarkProcessed(job.IdempotencyKey);
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            Console.WriteLine($"[ERROR] {ex.Message}");
+    //        }
+    //    }
+    //}
 }

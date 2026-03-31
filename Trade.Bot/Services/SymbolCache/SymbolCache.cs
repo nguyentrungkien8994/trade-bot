@@ -1,6 +1,9 @@
 ﻿using Bybit.Net.Clients;
+using Bybit.Net.Objects.Models.V5;
 using Confluent.Kafka;
+using CryptoExchange.Net;
 using CryptoExchange.Net.Authentication;
+using System.Collections.Concurrent;
 using System.Globalization;
 using Trade.Bot.Exchanges;
 using Trade.Bot.Models;
@@ -9,21 +12,37 @@ namespace Trade.Bot.Services
 {
     public class SymbolCache : ISymbolCache
     {
+        private readonly ConcurrentDictionary<string, PositionState> _store = new();
         private readonly Dictionary<string, SymbolRule> _cache = new();
-        private BybitRestClient GetClient()
+        private readonly IAccountProvider _accountProvider;
+        public SymbolCache(IAccountProvider accountProvider)
         {
-            var client = new BybitRestClient(options =>
+            _accountProvider = accountProvider;
+        }
+        private BybitRestClient GetClient(AccountConfig? acc)
+        {
+            if (acc != null)
             {
-                options.Environment = Bybit.Net.BybitEnvironment.DemoTrading;
-            });
-            return client;
+
+                return new BybitRestClient(options =>
+                {
+                    options.ApiCredentials = new ApiCredentials(acc.ApiKey, acc.SecretKey);
+                    options.Environment = Bybit.Net.BybitEnvironment.DemoTrading;
+                });
+            }
+            else
+            {
+                return new BybitRestClient(options =>
+                {
+                    options.Environment = Bybit.Net.BybitEnvironment.DemoTrading;
+                });
+            }
         }
         public async Task InitializeAsync()
         {
             Console.WriteLine("Loading symbol metadata...");
-            var client = GetClient();
+            var client = GetClient(null);
             var result = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Bybit.Net.Enums.Category.Linear);
-
             if (!result.Success)
                 throw new Exception(result.Error?.Message);
 
@@ -42,6 +61,56 @@ namespace Trade.Bot.Services
             Console.WriteLine($"Loaded {_cache.Count} symbols");
         }
 
+        public async Task InitializePositionsAsync()
+        {
+            Console.WriteLine("Loading current positions...");
+            _store.Clear();
+            foreach (var acc in _accountProvider.GetAccounts())
+            {
+                var client = GetClient(acc);
+                var result = await client.V5Api.Trading.GetPositionsAsync(Bybit.Net.Enums.Category.Linear, settleAsset: "USDT");
+
+                if (!result.Success)
+                    throw new Exception(result.Error?.Message);
+                
+                foreach (var s in result.Data.List)
+                {
+                    UpsertTradeStatus(acc.AccountId, s.Side == Bybit.Net.Enums.PositionSide.Buy ? "buy" : "sell", s.Symbol, s.Quantity);
+                }
+            }
+            Console.WriteLine("Loaded positions!");
+        }
+
+        //private async Task InitializeOrderAsync()
+        //{
+        //    Console.WriteLine("Loading current orders...");
+        //    foreach (var acc in _accountProvider.GetAccounts())
+        //    {
+        //        var client = GetClient(acc);
+        //        var result = await client.V5Api.Trading.GetOrdersAsync(Bybit.Net.Enums.Category.Linear, settleAsset: "USDT");
+
+        //        if (!result.Success)
+        //            throw new Exception(result.Error?.Message);
+
+        //        foreach (var s in result.Data.List)
+        //        {
+        //            UpsertTradeStatus(acc.AccountId, s.Side.ToString(),s.Symbol,s.Quantity);
+        //        }
+        //    }
+        //    Console.WriteLine("Loaded orders!");
+        //}
+        public void UpsertTradeStatus(string accId, string side, string symbol, decimal size)
+        {
+            var position = new PositionState
+            {
+                Symbol = symbol,
+                Side = side,
+                Size = size
+            };
+            string tradeKey = BuildTradeStatusKey(accId, side, "market", symbol);
+            UpsertTradeStatus(tradeKey, position);
+            Console.WriteLine($"[Account]: {tradeKey}");
+        }
         public SymbolRule Get(string symbol)
         {
 
@@ -50,5 +119,27 @@ namespace Trade.Bot.Services
 
             return _cache[symbol];
         }
+        public string BuildTradeStatusKey(string accId, string side, string market, string symbol)
+        {
+            return $"{accId}_{side}_{market}_{symbol}".ToLower();
+        }
+        public bool TryGetTradeStatus(string tradeKey, out PositionState state)
+        {
+            return _store.TryGetValue(tradeKey, out state!);
+        }
+
+        public void UpsertTradeStatus(string tradeKey, PositionState state)
+        {
+            _store[tradeKey] = state;
+        }
+
+        public void RemoveTradeStatus(string tradeKey)
+        {
+            {
+                _store.TryRemove(tradeKey, out _);
+                Console.WriteLine("Remove position: " + tradeKey);
+            }
+        }
+
     }
 }

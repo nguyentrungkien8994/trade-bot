@@ -1,8 +1,10 @@
-
-using Confluent.Kafka;
+﻿
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Shared.Helper;
+using Shared.Kafka;
 using System.Text.Json;
 using Trade.Bot.Models;
 
@@ -11,48 +13,58 @@ namespace Trade.Bot.Services;
 public class KafkaConsumerService : BackgroundService
 {
     private readonly SignalProcessor _processor;
-    private readonly IConfiguration _configuration;
+    private readonly ILogger<KafkaConsumerService> _logger;
+    private IKafkaConsumer _kafkaConsumer;
+    private IOptions<KafkaOptions> _options;
 
-    public KafkaConsumerService(SignalProcessor processor, IConfiguration configuration)
+    public KafkaConsumerService(SignalProcessor processor,
+        IKafkaConsumer kafkaConsumer,
+        IOptions<KafkaOptions> options,
+        ILogger<KafkaConsumerService> logger)
     {
         _processor = processor;
-        _configuration = configuration;
+        _kafkaConsumer = kafkaConsumer;
+        _options = options;
+        _logger = logger;
     }
 
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        string kafka_bootstrap = ConfigHelper.GetConfigByKey("KAFKA_BOOTSTRAP", _configuration);
-        string kafka_group = ConfigHelper.GetConfigByKey("KAFKA_GROUP_ID", _configuration);
-        string kafka_topic = ConfigHelper.GetConfigByKey("KAFKA_TOPIC", _configuration);
-        var config = new ConsumerConfig
-        {
-            BootstrapServers = kafka_bootstrap,
-            GroupId = kafka_group,
-            AutoOffsetReset = AutoOffsetReset.Earliest
-        };
+        //try
+        //{
+        //    await _kafkaConsumer.ConsumeAsync(_options.Value.Topic, HandleMessage, ct);
+        //}
+        //catch (Exception ex)
+        //{
+        //    _logger.LogError(ex, ex.Message);
+        //}
 
-        using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
-        consumer.Subscribe(kafka_topic);
 
+        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Side\":\"Buy\",\"Entry\":67540.0,\"Risk\":10,\"EntryRange\":null,\"StopLoss\":0,\"TakeProfit\":0,\"Market\":\"limit\"}}";
+        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Side\":\"SELL\",\"Entry\":71037.0,\"Risk\":10,\"EntryRange\":null,\"StopLoss\":0,\"TakeProfit\":0,\"Market\":\"market\"}}";
+        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":1,\"Side\":\"SELL\",\"StopLoss\":70000}}";
+        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":50}}";
+        string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":100}}";
+        await HandleMessage(Guid.NewGuid().ToString(), json);
         while (!ct.IsCancellationRequested)
         {
-            var result = consumer.Consume(ct);
-            var signal = JsonSerializer.Deserialize<TradeSignal>(result.Message.Value);
 
-            if (signal == null) continue;
-
+        }
+    }
+    private async Task HandleMessage(string? key, string value)
+    {
+        // TODO: xử lý nghiệp vụ tại đây
+        try
+        {
+            if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) return;
+            var signal = JsonSerializer.Deserialize<TradeSignal>(value);
+            if (signal == null) return;
+            signal.MsgId = key;
             await _processor.ProcessAsync(signal);
         }
-
-        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Side\":\"SELL\",\"Entry\":71037.0,\"Risk\":10,\"EntryRange\":null,\"StopLoss\":0,\"TakeProfit\":0,\"Market\":\"market\"}}";
-        //var signal = JsonSerializer.Deserialize<TradeSignal>(json);
-
-        //if (signal == null) return;
-
-        //await _processor.ProcessAsync(signal);
-        //while (!ct.IsCancellationRequested)
-        //{
-
-        //}
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+        }
     }
 }
