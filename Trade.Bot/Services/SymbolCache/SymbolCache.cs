@@ -75,7 +75,7 @@ namespace Trade.Bot.Services
                 
                 foreach (var s in result.Data.List)
                 {
-                    UpsertTradeStatus(acc.AccountId, s.Side == Bybit.Net.Enums.PositionSide.Buy ? "buy" : "sell", s.Symbol, s.Quantity);
+                    UpsertTradeStatus(acc.AccountId, s.Side == Bybit.Net.Enums.PositionSide.Buy ? "buy" : "sell", s.Symbol, s.Quantity,(s.AveragePrice??0));
                 }
             }
             Console.WriteLine("Loaded positions!");
@@ -99,13 +99,14 @@ namespace Trade.Bot.Services
         //    }
         //    Console.WriteLine("Loaded orders!");
         //}
-        public void UpsertTradeStatus(string accId, string side, string symbol, decimal size)
+        public void UpsertTradeStatus(string accId, string side, string symbol, decimal size,decimal Entry)
         {
             var position = new PositionState
             {
                 Symbol = symbol,
                 Side = side,
-                Size = size
+                Size = size,
+                Entry = Entry
             };
             string tradeKey = BuildTradeStatusKey(accId, side, "market", symbol);
             UpsertTradeStatus(tradeKey, position);

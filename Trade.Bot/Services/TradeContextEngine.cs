@@ -38,7 +38,7 @@ namespace Trade.Bot.Services
 
         public async Task HandleAsync(AccountConfig acc, TradeSignal signal)
         {
-            if (signal == null || signal.TradeCommand == null)
+            if (signal == null || signal.tradeCommands == null)
             {
                 _logger.LogWarning("Signal or TradeCommand null");
                 return;
@@ -48,22 +48,24 @@ namespace Trade.Bot.Services
                 _logger.LogWarning("Account not ready");
                 return;
             }
-            TradeCommand cmd = signal.TradeCommand;
-
-            switch (cmd.Action)
+            foreach (TradeCommand cmd in signal.tradeCommands)
             {
-                case TradeAction.Open:
-                    await HandleOpen(acc, signal);
-                    break;
+                switch (cmd.Action)
+                {
+                    case TradeAction.Open:
+                        await HandleOpen(acc, cmd,signal.msgId);
+                        break;
 
-                case TradeAction.UpdateSL:
-                    await HandleSL(acc, signal);
-                    break;
+                    case TradeAction.UpdateSL:
+                        await HandleSL(acc, cmd, signal.msgId);
+                        break;
 
-                case TradeAction.Reduce:
-                    await HandleReduce(acc, signal);
-                    break;
+                    case TradeAction.Reduce:
+                        await HandleReduce(acc, cmd, signal.msgId);
+                        break;
+                }
             }
+
         }
 
         private PositionState GetPositionState(string accId, TradeCommand cmd)
@@ -79,9 +81,8 @@ namespace Trade.Bot.Services
         }
 
         // ===== OPEN =====
-        private async Task HandleOpen(AccountConfig acc, TradeSignal signal)
+        private async Task HandleOpen(AccountConfig acc, TradeCommand cmd,string msgId)
         {
-            TradeCommand cmd = signal.TradeCommand;
             var pos = GetPositionState(acc.AccountId, cmd);
             if (pos != null)
                 return;
@@ -97,7 +98,7 @@ namespace Trade.Bot.Services
                 Entry = cmd.Entry,
                 StopLoss = cmd.StopLoss,
                 TakeProfit = cmd.TakeProfit,
-                MsgId = signal.MsgId,
+                MsgId = msgId,
             };
 
             var key = $"{acc.AccountId}_{cmd.Side}_{cmd.Market}{cmd.Symbol}".ToLower();
@@ -113,18 +114,18 @@ namespace Trade.Bot.Services
             };
 
             await _engine.EnqueueAsync(job);
+
             //_idem.MarkProcessed(key);
         }
 
         // ===== UPDATE SL =====
-        private async Task HandleSL(AccountConfig acc, TradeSignal signal)
+        private async Task HandleSL(AccountConfig acc, TradeCommand cmd, string msgId)
         {
-            TradeCommand cmd = signal.TradeCommand;
             var pos = GetPositionState(acc.AccountId, cmd);
-            if (pos == null || cmd.StopLoss == 0)
+            if (pos == null)
                 return;
-
-            var key = $"{acc.AccountId}_SL_{cmd.Symbol}_{cmd.StopLoss}";
+            decimal stoploss = cmd.StopLoss > 0 ? cmd.StopLoss : pos.Entry;
+            var key = $"{acc.AccountId}_SL_{cmd.Symbol}_{stoploss}";
             var job = new ExecutionJob
             {
                 Account = acc,
@@ -132,8 +133,8 @@ namespace Trade.Bot.Services
                 Order = new ExchangeOrder
                 {
                     Symbol = cmd.Symbol,
-                    StopLoss = cmd.StopLoss,
-                    MsgId = signal.MsgId,
+                    StopLoss = stoploss,
+                    MsgId = msgId,
                 },
                 IdempotencyKey = key
             };
@@ -144,9 +145,8 @@ namespace Trade.Bot.Services
         }
 
         // ===== REDUCE =====
-        private async Task HandleReduce(AccountConfig acc, TradeSignal signal)
+        private async Task HandleReduce(AccountConfig acc, TradeCommand cmd, string msgId)
         {
-            TradeCommand cmd = signal.TradeCommand;
             var pos = GetPositionState(acc.AccountId, cmd);
             if (pos == null || cmd.ReducePercent == 0)
                 return;
@@ -167,7 +167,7 @@ namespace Trade.Bot.Services
                 Entry = cmd.Entry,
                 StopLoss = cmd.StopLoss,
                 TakeProfit = cmd.TakeProfit,
-                MsgId = signal.MsgId,
+                MsgId = msgId,
                 ReduceOnly = true,
                 ReduceAll = (cmd.ReducePercent > 99)
             };

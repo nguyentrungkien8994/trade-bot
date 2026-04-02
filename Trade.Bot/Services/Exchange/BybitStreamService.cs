@@ -39,16 +39,15 @@ namespace Trade.Bot.Services
                 {
                     foreach (var p in data.Data)
                     {
-                        //UpsertPosition(acc, p);
                         if (p.Side != null)
                         {
                             string side = p.Side == Bybit.Net.Enums.PositionSide.Sell ? "sell" : "buy";
                             string tradeKey = _cache.BuildTradeStatusKey(acc.AccountId, side, "market", p.Symbol);
-                            _cache.UpsertTradeStatus(tradeKey, new PositionState() { Side = side, Size = p.Quantity, Symbol = p.Symbol });
+                            _cache.UpsertTradeStatus(tradeKey, new PositionState() { Side = side, Size = p.Quantity, Symbol = p.Symbol, Entry = (p.AveragePrice??0) });
                         }
                         else
                         {
-                           await _cache.InitializePositionsAsync();
+                            await _cache.InitializePositionsAsync();
                         }
                     }
                 });

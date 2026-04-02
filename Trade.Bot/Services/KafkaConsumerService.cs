@@ -1,11 +1,9 @@
 ﻿
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Shared.Helper;
+using Newtonsoft.Json;
 using Shared.Kafka;
-using System.Text.Json;
 using Trade.Bot.Models;
 
 namespace Trade.Bot.Services;
@@ -40,11 +38,11 @@ public class KafkaConsumerService : BackgroundService
         }
 
 
-        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Side\":\"Buy\",\"Entry\":67540.0,\"Risk\":10,\"EntryRange\":null,\"StopLoss\":0,\"TakeProfit\":0,\"Market\":\"limit\"}}";
-        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Side\":\"SELL\",\"Entry\":71037.0,\"Risk\":10,\"EntryRange\":null,\"StopLoss\":0,\"TakeProfit\":0,\"Market\":\"market\"}}";
-        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":1,\"Side\":\"SELL\",\"StopLoss\":70000}}";
-        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":50}}";
-        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":100}}";
+        ////string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Side\":\"Buy\",\"Entry\":67540.0,\"Risk\":10,\"EntryRange\":null,\"StopLoss\":0,\"TakeProfit\":0,\"Market\":\"limit\"}}";
+        //string json = "{\"Owner\":\"kai\", \"TradeCommand\": [{\"Symbol\":\"BTCUSDT\",\"Side\":\"SELL\",\"Entry\":71037.0,\"Risk\":10,\"EntryRange\":null,\"StopLoss\":0,\"TakeProfit\":0,\"Market\":\"market\"}]}";
+        ////string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":1,\"Side\":\"SELL\",\"StopLoss\":70000}}";
+        ////string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":50}}";
+        ////string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":100}}";
         //await HandleMessage(Guid.NewGuid().ToString(), json);
         //while (!ct.IsCancellationRequested)
         //{
@@ -57,9 +55,13 @@ public class KafkaConsumerService : BackgroundService
         try
         {
             if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(value)) return;
-            var signal = JsonSerializer.Deserialize<TradeSignal>(value);
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            };
+            var signal = JsonConvert.DeserializeObject<TradeSignal>(value,settings);
             if (signal == null) return;
-            signal.MsgId = key;
+            signal.msgId = key;
             await _processor.ProcessAsync(signal);
         }
         catch (Exception ex)

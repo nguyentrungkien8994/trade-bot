@@ -5,9 +5,9 @@ namespace Trade.Bot.Models;
 
 public class TradeSignal
 {
-    public string Owner { get; set; } = default!;
-    public string MsgId { get; set; } = default!;
-    public TradeCommand TradeCommand { get; set; } = default!;
+    public string owner { get; set; } = default!;
+    public string msgId { get; set; } = default!;
+    public TradeCommand[] tradeCommands { get; set; } = default!;
 }
 
 public class TradeCommand

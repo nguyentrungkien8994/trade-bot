@@ -85,7 +85,7 @@ public class BybitClient : IExchangeClient
 
         var accountTradeHistory = new { account_id = acc.AccountId, 
                                         msg_id = order.MsgId, 
-                                        command = JsonConvert.SerializeObject(result.Data),
+                                        command = JsonConvert.SerializeObject(order),
                                         created_at = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                                         updated_at = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                                         created_by = "admin",
