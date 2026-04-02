@@ -54,6 +54,7 @@ public class BybitClient : IExchangeClient
             "limit" => NewOrderType.Limit,
             _ => NewOrderType.Market,
         };
+        
         var result = await client.V5Api.Trading.PlaceOrderAsync(
             Category.Linear,
             order.Symbol,

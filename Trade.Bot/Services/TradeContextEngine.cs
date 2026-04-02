@@ -83,10 +83,11 @@ namespace Trade.Bot.Services
         // ===== OPEN =====
         private async Task HandleOpen(AccountConfig acc, TradeCommand cmd,string msgId)
         {
+            if (!cmd.Symbol.EndsWith("USDT"))
+                cmd.Symbol = cmd.Symbol + "USDT";
             var pos = GetPositionState(acc.AccountId, cmd);
             if (pos != null)
                 return;
-
             var size = _risk.CalculatePositionSize(cmd, _balanceService.GetBalance(acc.AccountId));
 
             var order = new ExchangeOrder
@@ -121,9 +122,12 @@ namespace Trade.Bot.Services
         // ===== UPDATE SL =====
         private async Task HandleSL(AccountConfig acc, TradeCommand cmd, string msgId)
         {
+            if (!cmd.Symbol.EndsWith("USDT"))
+                cmd.Symbol = cmd.Symbol + "USDT";
             var pos = GetPositionState(acc.AccountId, cmd);
             if (pos == null)
                 return;
+
             decimal stoploss = cmd.StopLoss > 0 ? cmd.StopLoss : pos.Entry;
             var key = $"{acc.AccountId}_SL_{cmd.Symbol}_{stoploss}";
             var job = new ExecutionJob
@@ -147,6 +151,8 @@ namespace Trade.Bot.Services
         // ===== REDUCE =====
         private async Task HandleReduce(AccountConfig acc, TradeCommand cmd, string msgId)
         {
+            if (!cmd.Symbol.EndsWith("USDT"))
+                cmd.Symbol = cmd.Symbol + "USDT";
             var pos = GetPositionState(acc.AccountId, cmd);
             if (pos == null || cmd.ReducePercent == 0)
                 return;
