@@ -1,11 +1,6 @@
 ﻿using Bybit.Net.Clients;
-using Bybit.Net.Objects.Models.V5;
-using Confluent.Kafka;
-using CryptoExchange.Net;
 using CryptoExchange.Net.Authentication;
 using System.Collections.Concurrent;
-using System.Globalization;
-using Trade.Bot.Exchanges;
 using Trade.Bot.Models;
 
 namespace Trade.Bot.Services
@@ -42,7 +37,7 @@ namespace Trade.Bot.Services
         {
             Console.WriteLine("Loading symbol metadata...");
             var client = GetClient(null);
-            var result = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Bybit.Net.Enums.Category.Linear);
+            var result = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Bybit.Net.Enums.Category.Linear,status:Bybit.Net.Enums.SymbolStatus.Trading,limit:1000);
             if (!result.Success)
                 throw new Exception(result.Error?.Message);
 
@@ -69,7 +64,7 @@ namespace Trade.Bot.Services
             {
                 var client = GetClient(acc);
                 var result = await client.V5Api.Trading.GetPositionsAsync(Bybit.Net.Enums.Category.Linear, settleAsset: "USDT");
-
+                
                 if (!result.Success)
                     throw new Exception(result.Error?.Message);
                 
