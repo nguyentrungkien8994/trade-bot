@@ -15,9 +15,13 @@ builder.Services.Configure<List<AccountConfig>>(
 string kafka_bootstrap = ConfigHelper.GetConfigByKey("KAFKA_BOOTSTRAP", builder.Configuration);
 string kafka_group = ConfigHelper.GetConfigByKey("KAFKA_GROUP_ID", builder.Configuration);
 string kafka_topic = ConfigHelper.GetConfigByKey("KAFKA_TOPIC", builder.Configuration);
+
+string redisServer = ConfigHelper.GetConfigByKey("REDIS_SERVER", builder.Configuration);
+string redisInstance = ConfigHelper.GetConfigByKey("REDIS_INSTANCE", builder.Configuration);
 //log
 builder.Services.AddNLog();
-builder.Services.AddConfluentKafka(kafka_bootstrap,kafka_group,kafka_topic);
+//builder.Services.AddConfluentKafka(kafka_bootstrap,kafka_group,kafka_topic);
+builder.Services.AddExchangeRedis(redisServer,redisInstance);
 // core
 builder.Services.AddSingleton<IAccountProvider, AccountProvider>();
 builder.Services.AddSingleton<IIdempotencyService, InMemoryIdempotencyService>();
@@ -38,7 +42,7 @@ builder.Services.AddSingleton<SignalProcessor>();
 //bybit stream service
 builder.Services.AddSingleton<BybitStreamService>();
 // background worker
-builder.Services.AddHostedService<KafkaConsumerService>();
+builder.Services.AddHostedService<ServiceWorker>();
 
 var app = builder.Build();
 

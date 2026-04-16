@@ -4,7 +4,9 @@ using Bybit.Net.Enums;
 using CryptoExchange.Net.Authentication;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Shared.Kafka;
+using Shared.Redis;
+
+//using Shared.Kafka;
 using Trade.Bot.Models;
 using Trade.Bot.Services;
 
@@ -15,11 +17,13 @@ public class BybitClient : IExchangeClient
     private readonly ILogger<BybitClient> _logger;
     private readonly ISymbolCache _cache;
     private readonly Dictionary<string, BybitRestClient> _clients = new();
-    private readonly IKafkaProducer _kafkaproduce;
-    public BybitClient(ILogger<BybitClient> logger, IKafkaProducer kafkaproduce, ISymbolCache cache)
+    //private readonly IKafkaProducer _kafkaproduce;
+    private readonly IRedisStreamPublisher _redisStreamPublisher;
+    public BybitClient(ILogger<BybitClient> logger, IRedisStreamPublisher redisStreamPublisher, ISymbolCache cache)
     {
         _logger = logger;
-        _kafkaproduce = kafkaproduce;
+        //_kafkaproduce = kafkaproduce;
+        _redisStreamPublisher= redisStreamPublisher;
         _cache = cache;
     }
     public string Name => "Bybit";
@@ -93,7 +97,8 @@ public class BybitClient : IExchangeClient
                                         updated_by = "admin",
         };
         object jsonObj = new { entity_name = "AccountTradeHistory", entity_value = JsonConvert.SerializeObject(accountTradeHistory) };
-        await _kafkaproduce.ProduceAsync<object>("trade.storage", order.MsgId, jsonObj);
+        await _redisStreamPublisher.AddAsync<object>("trade.storage", jsonObj);
+        //await _kafkaproduce.ProduceAsync<object>("trade.storage", order.MsgId, jsonObj);
 
         _logger.LogInformation($"[BYBIT:{acc.AccountId}] placed {order.Symbol}");
 

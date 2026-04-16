@@ -1,28 +1,36 @@
 ﻿
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using Shared.Kafka;
+using Shared.Helper;
+//using Shared.Kafka;
+using Shared.Redis;
 using Trade.Bot.Models;
 
 namespace Trade.Bot.Services;
 
-public class KafkaConsumerService : BackgroundService
+public class ServiceWorker : BackgroundService
 {
     private readonly SignalProcessor _processor;
-    private readonly ILogger<KafkaConsumerService> _logger;
-    private IKafkaConsumer _kafkaConsumer;
-    private IOptions<KafkaOptions> _options;
-
-    public KafkaConsumerService(SignalProcessor processor,
-        IKafkaConsumer kafkaConsumer,
-        IOptions<KafkaOptions> options,
-        ILogger<KafkaConsumerService> logger)
+    private readonly ILogger<ServiceWorker> _logger;
+    //private IKafkaConsumer _kafkaConsumer;
+    //private IOptions<KafkaOptions> _options;
+    private readonly IConfiguration _configuration;
+    private readonly IRedisStreamService _redisStreamConsumer;
+    public ServiceWorker(SignalProcessor processor,
+        //IKafkaConsumer kafkaConsumer,
+        //IOptions<KafkaOptions> options,
+        IConfiguration configuration,
+        IRedisStreamService redisStreamConsumer,
+        ILogger<ServiceWorker> logger)
     {
         _processor = processor;
-        _kafkaConsumer = kafkaConsumer;
-        _options = options;
+        //_kafkaConsumer = kafkaConsumer;
+        //_options = options;
+        _redisStreamConsumer = redisStreamConsumer;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -30,7 +38,27 @@ public class KafkaConsumerService : BackgroundService
     {
         try
         {
-            await _kafkaConsumer.ConsumeAsync(_options.Value.Topic, HandleMessage, ct);
+            //await _kafkaConsumer.ConsumeAsync(_options.Value.Topic, HandleMessage, ct);
+            string stream = ConfigHelper.GetConfigByKey("REDIS_STREAM", _configuration);
+            string group = ConfigHelper.GetConfigByKey("REDIS_GROUP", _configuration);
+            var consumer = Environment.MachineName;
+            await _redisStreamConsumer.CreateConsumerGroupAsync(stream, group);
+            while (!ct.IsCancellationRequested)
+            {
+                var messages = await _redisStreamConsumer.ReadGroupAsync<object>(
+                stream,
+                group,
+                consumer);
+                if (messages.Count > 0)
+                {
+                    foreach (var message in messages)
+                    {
+                        string? strData = message.Data?.ToString();
+                        if (string.IsNullOrWhiteSpace(strData)) continue;
+                        await HandleMessage(Guid.NewGuid().ToString(), strData);
+                    }
+                }
+            }
         }
         catch (Exception ex)
         {
