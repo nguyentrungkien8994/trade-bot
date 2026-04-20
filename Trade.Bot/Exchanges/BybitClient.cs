@@ -47,7 +47,7 @@ public class BybitClient : IExchangeClient
     public async Task PlaceOrderAsync(AccountConfig acc, ExchangeOrder order, CancellationToken ct)
     {
         var client = GetClient(acc);
-
+        
         var side = order.Side?.ToLower() switch
         {
             "buy" or "long" => OrderSide.Buy,
@@ -58,7 +58,7 @@ public class BybitClient : IExchangeClient
             "limit" => NewOrderType.Limit,
             _ => NewOrderType.Market,
         };
-        
+        _logger.LogInformation($"{acc.AccountId} process order {side.ToString()} {orderType.ToString()} {order.Symbol}");
         var result = await client.V5Api.Trading.PlaceOrderAsync(
             Category.Linear,
             order.Symbol,

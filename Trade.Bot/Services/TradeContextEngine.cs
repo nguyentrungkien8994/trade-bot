@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using NLog.Layouts;
 using Trade.Bot.Enum;
 using Trade.Bot.Models;
 
@@ -38,34 +39,40 @@ namespace Trade.Bot.Services
 
         public async Task HandleAsync(AccountConfig acc, TradeSignal signal)
         {
-            if (signal == null || signal.tradeCommands == null)
+            try
             {
-                _logger.LogWarning("Signal or TradeCommand null");
-                return;
-            }
-            if (!_balances.IsReady(acc.AccountId))
-            {
-                _logger.LogWarning("Account not ready");
-                return;
-            }
-            foreach (TradeCommand cmd in signal.tradeCommands)
-            {
-                switch (cmd.Action)
+                if (signal == null || signal.tradeCommands == null)
                 {
-                    case TradeAction.Open:
-                        await HandleOpen(acc, cmd,signal.msgId);
-                        break;
+                    _logger.LogWarning("Signal or TradeCommand null");
+                    return;
+                }
+                if (!_balances.IsReady(acc.AccountId))
+                {
+                    _logger.LogWarning("Account not ready");
+                    return;
+                }
+                foreach (TradeCommand cmd in signal.tradeCommands)
+                {
+                    switch (cmd.Action)
+                    {
+                        case TradeAction.Open:
+                            await HandleOpen(acc, cmd, signal.msgId);
+                            break;
 
-                    case TradeAction.UpdateSL:
-                        await HandleSL(acc, cmd, signal.msgId);
-                        break;
+                        case TradeAction.UpdateSL:
+                            await HandleSL(acc, cmd, signal.msgId);
+                            break;
 
-                    case TradeAction.Reduce:
-                        await HandleReduce(acc, cmd, signal.msgId);
-                        break;
+                        case TradeAction.Reduce:
+                            await HandleReduce(acc, cmd, signal.msgId);
+                            break;
+                    }
                 }
             }
-
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, ex.Message);
+            }
         }
 
         private PositionState GetPositionState(string accId, TradeCommand cmd)
@@ -87,7 +94,11 @@ namespace Trade.Bot.Services
                 cmd.Symbol = cmd.Symbol + "USDT";
             var pos = GetPositionState(acc.AccountId, cmd);
             if (pos != null)
+            {
+                _logger.LogWarning($"{acc.AccountId} Already exist position {cmd.Side} {cmd.Symbol}");
                 return;
+            }
+                
             var size = _risk.CalculatePositionSize(cmd, _balanceService.GetBalance(acc.AccountId));
 
             var order = new ExchangeOrder
@@ -126,7 +137,11 @@ namespace Trade.Bot.Services
                 cmd.Symbol = cmd.Symbol + "USDT";
             var pos = GetPositionState(acc.AccountId, cmd);
             if (pos == null)
+            {
+                _logger.LogWarning($"{acc.AccountId} no position exist {cmd.Side} {cmd.Symbol}");
                 return;
+            }
+                
 
             decimal stoploss = cmd.StopLoss > 0 ? cmd.StopLoss : pos.Entry;
             var key = $"{acc.AccountId}_SL_{cmd.Symbol}_{stoploss}";
@@ -155,7 +170,11 @@ namespace Trade.Bot.Services
                 cmd.Symbol = cmd.Symbol + "USDT";
             var pos = GetPositionState(acc.AccountId, cmd);
             if (pos == null || cmd.ReducePercent == 0)
+            {
+                _logger.LogWarning($"{acc.AccountId} can not reduce position {cmd.Side} {cmd.Symbol}");
                 return;
+            }
+                
 
             decimal qty = pos.Size * (cmd.ReducePercent / 100);
             if (cmd.ReducePercent > 99)
