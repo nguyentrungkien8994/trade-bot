@@ -55,6 +55,7 @@ public class ServiceWorker : BackgroundService
                     {
                         string? strData = message.Data?.ToString();
                         if (string.IsNullOrWhiteSpace(strData)) continue;
+                        await _redisStreamConsumer.AckAsync(stream,group, consumer,message.Id);
                         await HandleMessage(Guid.NewGuid().ToString(), strData);
                     }
                 }
