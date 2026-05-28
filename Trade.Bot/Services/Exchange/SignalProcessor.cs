@@ -24,10 +24,15 @@ public class SignalProcessor
     {
         try
         {
-            _logger.LogInformation($"Process message owner: {signal.owner} trade : {signal.tradeCommands[0].Side} {signal.tradeCommands[0].Symbol}");
+            string owner = signal.owner ?? "";
+            _logger.LogInformation($"Process message owner: {owner} trade : {signal.tradeCommands[0].Side} {signal.tradeCommands[0].Symbol}");
             foreach (var account in _accounts.GetAccounts())
             {
-                if (!account.Followers.ToLower().Contains(signal.owner.ToLower())) continue;
+                if (!account.Followers.Contains(owner, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning($"Owner: {owner}, acc: {account.AccountId} follow: {account.Followers}");
+                    continue;
+                }
                 await _contextEngine.HandleAsync(account, signal);
             }
         }
@@ -35,6 +40,6 @@ public class SignalProcessor
         {
             _logger.LogError(ex, ex.Message);
         }
-       
+
     }
 }

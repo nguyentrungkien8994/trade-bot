@@ -3,6 +3,7 @@
     public interface IBalanceService
     {
         decimal GetBalance(string accountId);
+        decimal GetMinSize(string accountId);
 
         bool TryGetBalance(string accountId, out decimal balance);
 

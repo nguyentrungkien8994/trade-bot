@@ -90,7 +90,7 @@ namespace Trade.Bot.Services
                             {
                                 var balance = coin.WalletBalance ?? 0;
 
-                                _balanceService.Update(acc.AccountId, 1000);
+                                //_balanceService.Update(acc.AccountId, balance);
 
                                 Console.WriteLine($"[BALANCE WS] {acc.AccountId}: {balance}");
                             }

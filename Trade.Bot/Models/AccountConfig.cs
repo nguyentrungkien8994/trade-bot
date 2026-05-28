@@ -8,5 +8,6 @@ public class AccountConfig
     public string ApiKey { get; set; } = default!;
     public string SecretKey { get; set; } = default!;
     public decimal InitBalance { get; set; } = default!;
+    public decimal MinSize { get; set; } = default!;
     public string Followers { get; set; } = default!;
 }

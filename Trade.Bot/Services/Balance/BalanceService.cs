@@ -70,5 +70,10 @@ namespace Trade.Bot.Services
 
             return DateTime.UtcNow - time > threshold;
         }
+
+        public decimal GetMinSize(string accountId)
+        {
+            return 50;
+        }
     }
 }

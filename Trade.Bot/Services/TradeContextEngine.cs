@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using NLog.Layouts;
 using Trade.Bot.Enum;
 using Trade.Bot.Models;
@@ -53,18 +54,22 @@ namespace Trade.Bot.Services
                 }
                 foreach (TradeCommand cmd in signal.tradeCommands)
                 {
+                    string jsonCmd = JsonConvert.SerializeObject(cmd);
                     switch (cmd.Action)
                     {
                         case TradeAction.Open:
                             await HandleOpen(acc, cmd, signal.msgId);
+                            _logger.LogInformation($"[Trade context engine]: OPEN {jsonCmd}");
                             break;
 
                         case TradeAction.UpdateSL:
                             await HandleSL(acc, cmd, signal.msgId);
+                            _logger.LogInformation($"[Trade context engine]: UPDATE SL {jsonCmd}");
                             break;
 
                         case TradeAction.Reduce:
                             await HandleReduce(acc, cmd, signal.msgId);
+                            _logger.LogInformation($"[Trade context engine]: REDUCE {jsonCmd}");
                             break;
                     }
                 }

@@ -11,6 +11,7 @@ public class RiskService
         if (risk == 0)
             risk = 5;
         var riskAmount = balance * risk / 100;
+        if (riskAmount < 50) riskAmount = 50;
         if (cmd.StopLoss > 0)
         {
             var stopDistance = Math.Abs(cmd.Entry - cmd.StopLoss);

@@ -75,6 +75,7 @@ namespace Trade.Bot.Services
             }
             Console.WriteLine("Loaded positions!");
         }
+       
 
         //private async Task InitializeOrderAsync()
         //{
