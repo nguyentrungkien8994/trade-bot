@@ -100,7 +100,7 @@ public class BybitClient : IExchangeClient
         await _redisStreamPublisher.AddAsync<object>("trade.storage", jsonObj);
         //await _kafkaproduce.ProduceAsync<object>("trade.storage", order.MsgId, jsonObj);
 
-        _logger.LogInformation($"[BYBIT:{acc.AccountId}] placed {order.Symbol}");
+        _logger.LogInformation($"[BYBIT:{acc.AccountId}] placed {order.Side} {order.Quantity} {order.Symbol} entry {order.Entry}");
 
     }
     public async Task PlaceAsync(AccountConfig acc, OrderIntent intent, CancellationToken ct)

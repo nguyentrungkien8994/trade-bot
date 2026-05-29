@@ -104,7 +104,7 @@ namespace Trade.Bot.Services
                 return;
             }
                 
-            var size = _risk.CalculatePositionSize(cmd, _balanceService.GetBalance(acc.AccountId));
+            var size = _risk.CalculatePositionSize(cmd, _balanceService.GetBalance(acc.AccountId), acc.MinSize);
 
             var order = new ExchangeOrder
             {

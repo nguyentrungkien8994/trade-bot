@@ -1,11 +1,5 @@
 ﻿using Bybit.Net.Clients;
-using Bybit.Net.Objects.Models.V5;
 using CryptoExchange.Net.Authentication;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Trade.Bot.Models;
 
 namespace Trade.Bot.Services
@@ -43,6 +37,7 @@ namespace Trade.Bot.Services
                         {
                             string side = p.Side == Bybit.Net.Enums.PositionSide.Sell ? "sell" : "buy";
                             string tradeKey = _cache.BuildTradeStatusKey(acc.AccountId, side, "market", p.Symbol);
+                            Console.WriteLine($"[POSITION WS]: {acc.AccountId} {side} {p.Quantity} {p.Symbol} at {p.AveragePrice} leverage {p.Leverage} init margin {p.InitialMargin}");
                             _cache.UpsertTradeStatus(tradeKey, new PositionState() { Side = side, Size = p.Quantity, Symbol = p.Symbol, Entry = (p.AveragePrice??0) });
                         }
                         else

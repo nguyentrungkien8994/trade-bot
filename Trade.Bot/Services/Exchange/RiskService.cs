@@ -5,13 +5,13 @@ namespace Trade.Bot.Services;
 
 public class RiskService
 {
-    public decimal CalculatePositionSize(TradeCommand cmd, decimal balance)
+    public decimal CalculatePositionSize(TradeCommand cmd, decimal balance, decimal minSize)
     {
         decimal risk = cmd.Risk;
         if (risk == 0)
             risk = 5;
         var riskAmount = balance * risk / 100;
-        if (riskAmount < 50) riskAmount = 50;
+        if (riskAmount < minSize) riskAmount = minSize;
         if (cmd.StopLoss > 0)
         {
             var stopDistance = Math.Abs(cmd.Entry - cmd.StopLoss);
