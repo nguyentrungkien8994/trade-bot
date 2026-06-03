@@ -30,7 +30,6 @@ public class SignalProcessor
             {
                 if (!account.Followers.Contains(owner, StringComparison.OrdinalIgnoreCase))
                 {
-                    _logger.LogWarning($"Owner: {owner}, acc: {account.AccountId} follow: {account.Followers}");
                     continue;
                 }
                 await _contextEngine.HandleAsync(account, signal);

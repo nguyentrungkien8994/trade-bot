@@ -56,21 +56,23 @@ namespace Trade.Bot.Services
             Console.WriteLine($"Loaded {_cache.Count} symbols");
         }
 
-        public async Task InitializePositionsAsync()
+        public async Task InitializePositionsAsync(string accountId = "")
         {
             Console.WriteLine("Loading current positions...");
             _store.Clear();
             foreach (var acc in _accountProvider.GetAccounts())
             {
-                var client = GetClient(acc);
-                var result = await client.V5Api.Trading.GetPositionsAsync(Bybit.Net.Enums.Category.Linear, settleAsset: "USDT");
-                
-                if (!result.Success)
-                    throw new Exception(result.Error?.Message);
-                
-                foreach (var s in result.Data.List)
-                {
-                    UpsertTradeStatus(acc.AccountId, s.Side == Bybit.Net.Enums.PositionSide.Buy ? "buy" : "sell", s.Symbol, s.Quantity,(s.AveragePrice??0));
+                if (string.IsNullOrWhiteSpace(accountId) || accountId.Equals(acc.AccountId)) {
+                    var client = GetClient(acc);
+                    var result = await client.V5Api.Trading.GetPositionsAsync(Bybit.Net.Enums.Category.Linear, settleAsset: "USDT");
+
+                    if (!result.Success)
+                        throw new Exception(result.Error?.Message);
+
+                    foreach (var s in result.Data.List)
+                    {
+                        UpsertTradeStatus(acc.AccountId, s.Side == Bybit.Net.Enums.PositionSide.Buy ? "buy" : "sell", s.Symbol, s.Quantity, (s.AveragePrice ?? 0));
+                    }
                 }
             }
             Console.WriteLine("Loaded positions!");

@@ -10,7 +10,7 @@ namespace Trade.Bot.Services
     public interface ISymbolCache
     {
         Task InitializeAsync();
-        Task InitializePositionsAsync();
+        Task InitializePositionsAsync(string accountId="");
         SymbolRule Get(string symbol);
         bool TryGetTradeStatus(string tradeKey, out PositionState state);
         void UpsertTradeStatus(string tradeKey, PositionState state);

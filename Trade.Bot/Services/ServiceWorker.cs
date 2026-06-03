@@ -71,7 +71,7 @@ public class ServiceWorker : BackgroundService
         //string json = "{\"Owner\":\"kai\", \"TradeCommand\": [{\"Symbol\":\"BTCUSDT\",\"Side\":\"SELL\",\"Entry\":71037.0,\"Risk\":10,\"EntryRange\":null,\"StopLoss\":0,\"TakeProfit\":0,\"Market\":\"market\"}]}";
         ////string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":1,\"Side\":\"SELL\",\"StopLoss\":70000}}";
         ////string json = "{\"Owner\":\"kai\", \"TradeCommand\": {\"Symbol\":\"BTCUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":50}}";
-        //string json = "{\"Owner\":\"kai\", \"TradeCommandS\": [{\"Symbol\":\"BEATUSDT\",\"Action\":2,\"Side\":\"BUY\",\"ReducePercent\":100}]}";
+        //string json = "{\"Owner\":\"tareeq\", \"TradeCommands\": [{\"Symbol\":\"ONDOUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":100},{\"Symbol\":\"WLDUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":100},{\"Symbol\":\"LITUSDT\",\"Action\":2,\"Side\":\"SELL\",\"ReducePercent\":100}]}";
         //await HandleMessage(Guid.NewGuid().ToString(), json);
         //while (!ct.IsCancellationRequested)
         //{

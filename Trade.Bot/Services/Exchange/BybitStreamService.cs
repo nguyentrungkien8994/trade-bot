@@ -42,7 +42,7 @@ namespace Trade.Bot.Services
                         }
                         else
                         {
-                            await _cache.InitializePositionsAsync();
+                            await _cache.InitializePositionsAsync(acc.AccountId);
                         }
                     }
                 });
