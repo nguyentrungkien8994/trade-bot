@@ -93,7 +93,7 @@ namespace Trade.Bot.Services
         }
 
         // ===== OPEN =====
-        private async Task HandleOpen(AccountConfig acc, TradeCommand cmd,string msgId)
+        private async Task HandleOpen(AccountConfig acc, TradeCommand cmd, string msgId)
         {
             if (!cmd.Symbol.EndsWith("USDT"))
                 cmd.Symbol = cmd.Symbol + "USDT";
@@ -103,7 +103,7 @@ namespace Trade.Bot.Services
                 _logger.LogWarning($"{acc.AccountId} Already exist position {cmd.Side} {cmd.Symbol}");
                 return;
             }
-                
+
             var size = _risk.CalculatePositionSize(cmd, _balanceService.GetBalance(acc.AccountId), acc.MinSize);
 
             var order = new ExchangeOrder
@@ -119,7 +119,7 @@ namespace Trade.Bot.Services
             };
 
             var key = $"{acc.AccountId}_{cmd.Side}_{cmd.Market}{cmd.Symbol}".ToLower();
-
+            Console.WriteLine(key);
             _normalizer.Normalize(order);
 
             var job = new ExecutionJob
@@ -146,10 +146,11 @@ namespace Trade.Bot.Services
                 _logger.LogWarning($"{acc.AccountId} no position exist {cmd.Side} {cmd.Symbol}");
                 return;
             }
-                
 
-            decimal stoploss = cmd.StopLoss > 0 ? cmd.StopLoss : pos.Entry;
+
+            decimal stoploss = pos.Entry;
             var key = $"{acc.AccountId}_SL_{cmd.Symbol}_{stoploss}";
+            Console.WriteLine(key);
             var job = new ExecutionJob
             {
                 Account = acc,
@@ -179,7 +180,7 @@ namespace Trade.Bot.Services
                 _logger.LogWarning($"{acc.AccountId} can not reduce position {cmd.Side} {cmd.Symbol}");
                 return;
             }
-                
+
 
             decimal qty = pos.Size * (cmd.ReducePercent / 100);
             if (cmd.ReducePercent > 99)
@@ -203,7 +204,7 @@ namespace Trade.Bot.Services
             };
             _normalizer.Normalize(order);
             var key = $"{acc.AccountId}_REDUCE_{cmd.Symbol}_{cmd.ReducePercent}_size_{pos.Size}".ToLower();
-
+            Console.WriteLine(key);
 
             var job = new ExecutionJob
             {
