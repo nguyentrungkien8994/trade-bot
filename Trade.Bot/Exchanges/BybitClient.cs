@@ -58,7 +58,7 @@ public class BybitClient : IExchangeClient
             "limit" => NewOrderType.Limit,
             _ => NewOrderType.Market,
         };
-        _logger.LogInformation($"{acc.AccountId} process order {side.ToString()} {orderType.ToString()} {order.Symbol}");
+        _logger.LogInformation($"[BYBIT-CLIENT]: {acc.AccountId} process order {side.ToString()} {orderType.ToString()} {order.Symbol} sl: {order.StopLoss}");
         var result = await client.V5Api.Trading.PlaceOrderAsync(
             Category.Linear,
             order.Symbol,

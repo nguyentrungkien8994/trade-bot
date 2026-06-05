@@ -37,7 +37,7 @@ namespace Trade.Bot.Services
         {
             Console.WriteLine("Loading symbol metadata...");
             var client = GetClient(null);
-            var result = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Bybit.Net.Enums.Category.Linear,limit:1000);
+            var result = await client.V5Api.ExchangeData.GetLinearInverseSymbolsAsync(Bybit.Net.Enums.Category.Linear, limit: 1000);
             if (!result.Success)
                 throw new Exception(result.Error?.Message);
 
@@ -62,22 +62,25 @@ namespace Trade.Bot.Services
             _store.Clear();
             foreach (var acc in _accountProvider.GetAccounts())
             {
-                if (string.IsNullOrWhiteSpace(accountId) || accountId.Equals(acc.AccountId)) {
+                if (string.IsNullOrWhiteSpace(accountId) || accountId.Equals(acc.AccountId))
+                {
                     var client = GetClient(acc);
                     var result = await client.V5Api.Trading.GetPositionsAsync(Bybit.Net.Enums.Category.Linear, settleAsset: "USDT");
+
 
                     if (!result.Success)
                         throw new Exception(result.Error?.Message);
 
                     foreach (var s in result.Data.List)
                     {
-                        UpsertTradeStatus(acc.AccountId, s.Side == Bybit.Net.Enums.PositionSide.Buy ? "buy" : "sell", s.Symbol, s.Quantity, (s.AveragePrice ?? 0));
+                        if (s.AveragePrice != null)
+                            UpsertTradeStatus(acc.AccountId, s.Side == Bybit.Net.Enums.PositionSide.Buy ? "buy" : "sell", s.Symbol, s.Quantity, s.AveragePrice.Value);
                     }
                 }
             }
             Console.WriteLine("Loaded positions!");
         }
-       
+
 
         //private async Task InitializeOrderAsync()
         //{
@@ -97,14 +100,14 @@ namespace Trade.Bot.Services
         //    }
         //    Console.WriteLine("Loaded orders!");
         //}
-        public void UpsertTradeStatus(string accId, string side, string symbol, decimal size,decimal Entry)
+        public void UpsertTradeStatus(string accId, string side, string symbol, decimal size, decimal entry)
         {
             var position = new PositionState
             {
                 Symbol = symbol,
                 Side = side,
                 Size = size,
-                Entry = Entry
+                Entry = entry
             };
             string tradeKey = BuildTradeStatusKey(accId, side, "market", symbol);
             UpsertTradeStatus(tradeKey, position);

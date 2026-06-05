@@ -37,7 +37,7 @@ namespace Trade.Bot.Services
                         {
                             string side = p.Side == Bybit.Net.Enums.PositionSide.Sell ? "sell" : "buy";
                             string tradeKey = _cache.BuildTradeStatusKey(acc.AccountId, side, "market", p.Symbol);
-                            Console.WriteLine($"[POSITION WS]: {acc.AccountId} {side} {p.Quantity} {p.Symbol} at {p.AveragePrice} leverage {p.Leverage} init margin {p.InitialMargin}");
+                            Console.WriteLine($"[POSITION WS]: {acc.AccountId} {side} {p.Quantity} {p.Symbol} at {p.AveragePrice} init margin {p.InitialMargin}, mark price {p.MarkPrice}");
                             _cache.UpsertTradeStatus(tradeKey, new PositionState() { Side = side, Size = p.Quantity, Symbol = p.Symbol, Entry = (p.AveragePrice??0) });
                         }
                         else

@@ -59,17 +59,17 @@ namespace Trade.Bot.Services
                     {
                         case TradeAction.Open:
                             await HandleOpen(acc, cmd, signal.msgId);
-                            _logger.LogInformation($"[Trade context engine]: OPEN {jsonCmd}");
+                            _logger.LogInformation($"[Trade context engine]: {acc.AccountId} OPEN {cmd.Side} {cmd.Symbol}");
                             break;
 
                         case TradeAction.UpdateSL:
                             await HandleSL(acc, cmd, signal.msgId);
-                            _logger.LogInformation($"[Trade context engine]: UPDATE SL {jsonCmd}");
+                            _logger.LogInformation($"[Trade context engine]: {acc.AccountId} UPDATE SL {cmd.Symbol}");
                             break;
 
                         case TradeAction.Reduce:
                             await HandleReduce(acc, cmd, signal.msgId);
-                            _logger.LogInformation($"[Trade context engine]: REDUCE {jsonCmd}");
+                            _logger.LogInformation($"[Trade context engine]: {acc.AccountId} REDUCE {cmd.Symbol}");
                             break;
                     }
                 }
